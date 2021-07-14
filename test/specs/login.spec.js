@@ -1,53 +1,158 @@
 import * as LoginPage from "../pages/login.page";
+const loginElements = LoginPage.elements;
 
-//Verify the login page loads with welcome text
-//Verify the login page redirect links (Google sign in\Sign Up link)
-//Verify forgot password link
-//Verify show hide button before entering password and after
-//Verify back button takes you back to email form
 describe('Login page ui and redirections', () => {
   it('should have welcome text', () => {
     LoginPage.open();
 
     //Verify welcome text
-    expect(LoginPage.getElementText(LoginPage.elements["logInH1"].selector)).toEqual("Welcome back!");
-    expect(LoginPage.getElementText(LoginPage.elements["logInH3"].selector)).toEqual("Sign into your signer account");
+    expect(LoginPage.getElementText(loginElements.logInH1)).toEqual("Welcome back!");
+    expect(LoginPage.getElementText(loginElements.logInH3)).toEqual("Sign into your signer account");
   });
-});
 
-//Verify invalid login with invalid email
-//Verify invalid login with invalid email format
-//Verify invalid login with empty email
-describe('Login page', () => {
-  it('should load with welcome text', () => {
+  it('should allow for google sign in', () => {
     LoginPage.open();
-  });
-});
 
-//Verify invalid login with invalid password 
-//Verify invalid login with empty password 
-describe('Login page', () => {
-  it('should load with welcome text', () => {
+    LoginPage.click(loginElements.googleSignInButton);
+
+    //Verify Google sign in button 
+    expect(LoginPage.getUrlOfPopUpWindow()).toContain("https://accounts.google.com/o/oauth2/auth/identifier");
+  });
+
+  it('should redirect to Sign Up page', () => {
     LoginPage.open();
+
+    LoginPage.click(loginElements.signUpLink);
+
+    //Verify Sign Up link
+    expect(browser).toHaveUrl("https://www.notarize.com/pricing");
+  });
+
+  it('should redirect to reset password page', () => {
+    LoginPage.open();
+
+    //Enter email
+    LoginPage.enterTextToField("vivarmlv@gmail.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Verify forgot password link
+    LoginPage.click(loginElements.forgotPasswordLink);
+    expect(LoginPage.verifyElementExists(loginElements.resetPasswordH1)).toBeTrue;
+  });
+
+  it('should show/hide password', () => {
+    LoginPage.open();
+
+    //Enter email
+    LoginPage.enterTextToField("vivarmlv@gmail.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Enter password
+    LoginPage.enterTextToField("N0tar!ze", loginElements.passwordField);
+
+    //Verify show hide button after entering password
+    LoginPage.click(loginElements.showPasswordButton);
+    expect(LoginPage.getElementProperty(loginElements.passwordField, "type")).toEqual("text");
+    LoginPage.click(loginElements.hidePasswordButton);
+    expect(LoginPage.getElementProperty(loginElements.passwordField, "type")).toEqual("password");
+  });
+
+  it('should take you back when you click back link', () => {
+    LoginPage.open();
+
+    //Enter email
+    LoginPage.enterTextToField("vivarmlv@gmail.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Verify back button takes you back to email form
+    LoginPage.click(loginElements.backLink);
+    expect(LoginPage.getElementText(loginElements.logInH1)).toEqual("Welcome back!");    
   });
 });
 
-//Verify not prompted with login on same session
+describe('Invalid email logins', () => {
+  it('should not login with invalid email', () => {
+    LoginPage.open();
 
-//Verify valid login
+    //Enter invalid email
+    LoginPage.enterTextToField("email@fake.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Enter password
+    LoginPage.enterTextToField("N0tar!ze", loginElements.passwordField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Verify invalid login with invalid email
+    expect(LoginPage.verifyElementExists(loginElements.invalidLoginResponse)).toBeTrue;
+  });
+
+  it('should not login with invalid email format', () => {
+    LoginPage.open();
+
+    //Enter invalid email format
+    LoginPage.enterTextToField("fakeEmail.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Verify invalid login with invalid email format
+    expect(LoginPage.verifyElementExists(loginElements.emailErrorResponse)).toBeTrue;
+  });
+
+  it('should not login with empty email', () => {
+    LoginPage.open();
+
+    //Enter no email
+    LoginPage.click(loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Verify invalid login with empty email
+    expect(LoginPage.verifyElementExists(loginElements.emailErrorResponse)).toBeTrue;
+  });
+});
+
+describe('Invalid password logins', () => {
+  it('should not login with invalid password', () => {
+    LoginPage.open();
+
+    //Enter email
+    LoginPage.enterTextToField("vivarmlv@gmail.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Enter invalid password
+    LoginPage.enterTextToField("invalid", loginElements.passwordField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Verify invalid login with invalid password 
+    expect(LoginPage.verifyElementExists(loginElements.invalidLoginResponse)).toBeTrue;
+  });
+
+  it('should not login with empty password', () => {
+    LoginPage.open();
+
+    //Enter email
+    LoginPage.enterTextToField("vivarmlv@gmail.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
+
+    //Enter password
+    LoginPage.click(loginElements.passwordField);
+
+    //Verify invalid login with empty password 
+    expect(LoginPage.verifyElementIsDisabled(loginElements.continueButton)).toBeTrue;
+  });
+});
+
 describe('Valid login', () => {
   it('should login to notarize', () => {
     LoginPage.open();
 
     //Enter email
-    LoginPage.enterTextToField("vivarmlv@gmail.com", LoginPage.elements["emailField"].selector);
-    LoginPage.click(LoginPage.elements["continueButtonActive"].selector);
+    LoginPage.enterTextToField("vivarmlv@gmail.com", loginElements.emailField);
+    LoginPage.click(loginElements.continueButton);
 
     //Enter password
-    LoginPage.enterTextToField("N0tar!ze", LoginPage.elements["passwordField"].selector);
-    LoginPage.click(LoginPage.elements["continueButtonActive"].selector);
+    LoginPage.enterTextToField("N0tar!ze", loginElements.passwordField);
+    LoginPage.click(loginElements.continueButton);
 
-    //Verify logged in
-    expect(LoginPage.verifyElementExists(LoginPage.elements["loggedInHeader"].selector)).toBeTrue;
+    //Verify valid login
+    expect(LoginPage.verifyElementExists(loginElements.loggedInHeader)).toBeTrue;
   });
 });
